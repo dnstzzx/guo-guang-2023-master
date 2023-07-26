@@ -12,6 +12,10 @@ class Direction(Enum):
     L = 3
 
     @property
+    def map_border_mask(self):
+        return 1 << self.value
+
+    @property
     def coord_delta(self):
         _deltas = [
             (0, 1),
@@ -38,21 +42,15 @@ class Direction(Enum):
     
     def relative_get(self, to: 'Direction') -> 'Direction': # 计算到达目标方向的相对方向
         return Direction((to.value - self.value) % 4)
+    
 
-
-class Cell:
-    map: 'Map'
+class Cell(NamedTuple):
     x: int
     y: int
-    _borders: List[bool]
-
-    def __init__(self, x: int, y: int, map: 'Map') -> None:
-        self._borders = [False for _ in range(4)]
-        self.x, self.y = x, y
-        self.map = map
+    map: 'Map'
 
     def has_neighbor_to(self, dir: Direction) -> bool:
-        return not self._borders[dir.value]
+        return self.map.borders[self.x][self.y] & dir.map_border_mask == 0
             
     def get_neighbor_to(self, dir: Direction) -> Union['Cell', None]:
         return self.map.cells[self.x + dir.x_delta][self.y + dir.y_delta] if self.has_neighbor_to(dir) else None
@@ -69,27 +67,23 @@ class Cell:
         return (delta_x <= 1 and delta_y == 0) or (delta_y <= 1 and delta_x == 0)
 
     def get_direction_to(self, cell: 'Cell') -> Union[Direction, None]:
-            dx = cell.x - self.x
-            dy = cell.y - self.y
+        dx = cell.x - self.x
+        dy = cell.y - self.y
 
-            if dx == 0 and dy == 1:
-                return Direction.F
-            elif dx == 1 and dy == 0:
-                return Direction.R
-            elif dx == 0 and dy == -1:
-                return Direction.B
-            elif dx == -1 and dy == 0:
-                return Direction.L
-            return None
-    
-    def get_border(self, dir: Direction) -> bool:
-        return self._borders[dir.value]
+        if dx == 0 and dy == 1:
+            return Direction.F
+        elif dx == 1 and dy == 0:
+            return Direction.R
+        elif dx == 0 and dy == -1:
+            return Direction.B
+        elif dx == -1 and dy == 0:
+            return Direction.L
+        return None
     
     def set_border(self, dir: Direction, has_barrier: bool):
         if self.has_neighbor_to(dir):
-            self.get_neighbor_to(dir)._borders[dir.opposite.value] = has_barrier
-        self._borders[dir.value] = has_barrier
-
+            self.map._set_border(self.get_neighbor_to(dir), dir.opposite, has_barrier)  # type: ignore
+        self.map._set_border(self, dir, has_barrier)
 
 
 class Car_State(NamedTuple):
@@ -120,11 +114,11 @@ class Path:
 
     def get_start(self) -> Car_State:
         """获取路径的起点"""
-        return self.states[0] if self.states else None
+        return self.states[0]
 
     def get_end(self) -> Car_State:
         """获取路径的终点"""
-        return self.states[-1] if self.states else None
+        return self.states[-1]
 
     def __str__(self):
         return " -> ".join(str(s) for s in self.states)
@@ -134,31 +128,43 @@ class Map:
     width: int
     height: int
     cells: List[List[Cell]] # [[col0],...]  cells[x][y]
+    borders: List[List[int]]    # 坐标x, y的四周墙壁, 0-3位分别表示前右后左,1有墙壁0无
     
     def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
         self.cells = [[Cell(i, j, self) for j in range(height)] for i in range(width)]
-        
+        self.borders = [[0 for _ in range(height)] for _ in range(width)]
+
         # 为地图边界cell添加border
-        for x in range(width):
-            for y in range(height):
-                cell = self.cells[x][y]
-                if x == 0:
-                    cell._borders[Direction.L.value] = True
-                if x == width-1:
-                    cell._borders[Direction.R.value] = True
-                if y == 0:
-                    cell._borders[Direction.B.value] = True
-                if y == height-1:
-                    cell._borders[Direction.F.value] = True
+        for i in range(width):
+            for j in range(height):
+                cell = self.cells[i][j]
+                if i == 0:
+                    self._set_border(cell, Direction.L, True)
+                if i == width-1:
+                    self._set_border(cell, Direction.R, True)
+                if j == 0:
+                    self._set_border(cell, Direction.B, True)
+                if j == height-1:
+                    self._set_border(cell, Direction.F, True)
+
+    def _set_border(self, cell: Cell, direction: Direction, has_barrier):
+        if cell.map != self:
+            print("wrong map while setting border!")
+            return
+        i, j = cell.x, cell.y
+        if has_barrier:
+            self.borders[i][j] |= direction.map_border_mask
+        else:
+            self.borders[i][j] &= ~direction.map_border_mask
     
     def cell_of(self, i, j) -> Cell:
         return self.cells[i][j]
 
     def state_of(self, i, j, toward):
         return Car_State(self.cell_of(i, j), toward)
-
+            
 
 @dataclass
 class Treasure:
