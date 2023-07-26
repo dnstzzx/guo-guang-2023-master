@@ -1,6 +1,7 @@
+from turtle import back
 from typing import List
 from dataclasses import dataclass
-from map import Path
+from map import Direction, Path
 
 @dataclass
 class Command:
@@ -13,35 +14,28 @@ class Command:
             s += ' ' + arg
         s += ';'
         return s
-
-def gen_cmd_straight_dis(mm: int) -> Command:
-    return Command('f', [str(mm)])
-
-
-def gen_cmd_straight_l(count: int) -> Command:
-    return Command('l', [str(count)])
-
-def gen_cmd_straight_r(count: int) -> Command:
-    return Command('r', [str(count)])
-
-def gen_cmd_backward_l(count: int) -> Command:
-    return Command('bl', [str(count)])
-
-def gen_cmd_backward_r(count: int) -> Command:
-    return Command('br', [str(count)])
-
+    
 def gen_cmd_stop() -> Command:
     return Command('s', [])
 
-def gen_cmd_turn_left(count = 1) -> Command:
-    return Command('L', []) if count == 1 else Command('L', [str(count)])
+def gen_cmd_straight_dis(mm: int, backward: bool) -> Command:
+    return Command('f' if not backward else 'bf', [str(mm)])
 
-def gen_cmd_turn_right(count = 1) -> Command:
-    return Command('R', []) if count == 1 else Command('R', [str(count)])
+def gen_cmd_straight_l(count: int, backward= False):
+    return Command('l' if not backward else 'bl', [str(count)])
 
-def gen_cmd_backward_turn_left(count = 1) -> Command:
-    return Command('bL', []) if count == 1 else Command('bL', [str(count)])
+def gen_cmd_straight_r(count: int, backward= False):
+    return Command('r' if not backward else 'br', [str(count)])
 
-def gen_cmd_backward_turn_right(count = 1) -> Command:
-    return Command('bR', []) if count == 1 else Command('bR', [str(count)])
+def gen_cmd_turn_left(count: int, backward: bool = False):
+    return Command('L' if not backward else 'bL', [] if count == 1 else [str(count)])
 
+def gen_cmd_turn_right(count: int, backward: bool = False):
+    return Command('R' if not backward else 'bR', [] if count == 1 else [str(count)])
+
+
+def gen_cmd_straight_branch(backward: bool ,logical_branch_dir: Direction, branch_count: int):
+    if logical_branch_dir == Direction.L:
+        return gen_cmd_straight_l(branch_count, backward)
+    elif logical_branch_dir == Direction.R:
+        return gen_cmd_straight_r(branch_count, backward)
