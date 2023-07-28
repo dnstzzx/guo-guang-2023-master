@@ -15,6 +15,9 @@ class Command:
         s += ';'
         return s
     
+def gen_cmd_enter() -> Command:
+    return Command('ent', [])
+    
 def gen_cmd_stop() -> Command:
     return Command('s', [])
 

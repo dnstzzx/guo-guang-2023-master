@@ -5,10 +5,12 @@ from comm import comm_init
 from config import configs
 from input import btn_mid, btn_set, btn_res
 import time
+from path import path_to_commands
 from promise import Promise
 from vision import deep
 import treasure
 import data
+import dijkstra
 
 from vision.camera import camera_init, get_camera_img
 
@@ -87,12 +89,22 @@ def main():
         for i, j in rec_result:
             treasure.treasures[(i, j)] = treasure.Treasure(data.current_map.cell_of(i, j))
         break
-    
+
+
     # 计算初始路径
     print("正在计算初始路径")
-    target = treasure.determine_treasure_order(data.entry_point, data.exit_point)[0]
+    curr_state = data.entry_point
+    target = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
+    path = dijkstra.calc_path(curr_state, target)
+    
+    cmds =  path_to_commands(path)
+
     print(f"目标点: ({target.pos.x}, {target.pos.y})")
     print("按下MID出发")
+    btn_mid.wait_for_released()
+    print("出发")
+
+    
 
 
 

@@ -38,4 +38,3 @@ def on_report_recv(rpt: Report):
 
     for promise in promises:
         promise.set_done(rpt)
-    
