@@ -14,7 +14,7 @@ class Record():
     state: Car_State = field(compare=False)
 
 
-def calc_path(start: Car_State, end: Car_State) -> Union[Path, None]:
+def calc_path_and_cost(start: Car_State, end: Car_State) -> Tuple[Path, float]:
     open_set: List[Record] = [Record(0, start)]    # 尚未处理的状态集合
     came_from: Dict[Car_State, Car_State] = {}              # 记录了最短路径中每个状态的前一个状态。came_from[s]表示状态s的前一个状态。
     g_score: Dict[Car_State, float] = defaultdict(lambda: INFINITY)   # 记录从起点到每个状态的当前最短距离。
@@ -28,7 +28,7 @@ def calc_path(start: Car_State, end: Car_State) -> Union[Path, None]:
             continue
         
         if current == end:
-            return reconstruct_path(came_from, current)
+            return (reconstruct_path(came_from, current), g_score[current])
             
         for neighbor, cost in get_neighbors(current):
             if neighbor.pos == current.pos and neighbor.toward == current.toward:
@@ -40,7 +40,11 @@ def calc_path(start: Car_State, end: Car_State) -> Union[Path, None]:
                 g_score[neighbor] = tent_g_score
                 heappush(open_set, Record(tent_g_score, neighbor))
                 
-    return None # No path found
+    return (None, INFINITY) # No path found
+
+
+def calc_path(start: Car_State, end: Car_State) -> Union[Path, None]:
+    return calc_path_and_cost(start, end)[0]
 
 def reconstruct_path(came_from: dict, current: Car_State) -> Path:
     path = []

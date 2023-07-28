@@ -12,9 +12,12 @@ class Button:
     def remove_released_listener(self, callback: Callable[[report.Report], None]):
         report.remove_report_listener(self.report_name, callback)
 
+    def add_released_promise(self, promise: Promise):
+        report.add_report_promise(self.report_name, promise)
+
     def wait_for_released(self):
         pms = Promise()
-        report.add_report_promise(self.report_name, pms)
+        self.add_released_promise(pms)
         pms.wait()
 
 

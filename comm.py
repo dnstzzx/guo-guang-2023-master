@@ -8,8 +8,11 @@ ser: serial.Serial
 
 def comm_init() -> bool:
     global ser
-    ser = serial.Serial(configs.serial_port, configs.serial_baund_rate)
-    if not ser.is_open():
+    try:
+        ser = serial.Serial(configs.serial_port, configs.serial_baund_rate)
+        if not ser.is_open():
+            return False
+    except Exception:
         return False
     
     

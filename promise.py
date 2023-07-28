@@ -11,7 +11,8 @@ class Promise(Generic[T]):
         self._callbacks: List[Callable[[T], None]] = []
         self._lock = Lock()
         self._notifier = Condition(self._lock)
-        
+    
+    @property
     def is_done(self) -> bool:
         return self._done
 

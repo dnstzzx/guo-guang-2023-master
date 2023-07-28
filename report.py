@@ -9,7 +9,7 @@ class Report:
     args: List[str]
 
 report_listeners: Dict[str, Set[Callable[[Report], None]]] = {}
-report_promises: Dict[str, List[Promise[Report]]]
+report_promises: Dict[str, List[Promise[Report]]] = {}
 promise_lock = Lock()
 
 def add_report_listener(rpt_name: str, listener: Callable[[Report], None]):
