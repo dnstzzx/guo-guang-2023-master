@@ -165,11 +165,3 @@ class Map:
     def state_of(self, i, j, toward):
         return Car_State(self.cell_of(i, j), toward)
             
-
-@dataclass
-class Treasure:
-    pos: Cell
-    known: bool
-    mine: bool
-    real: bool
-    pushed: bool

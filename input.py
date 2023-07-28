@@ -1,4 +1,5 @@
 from typing import Callable
+from promise import Promise
 import report
 
 class Button:
@@ -10,6 +11,12 @@ class Button:
 
     def remove_released_listener(self, callback: Callable[[report.Report], None]):
         report.remove_report_listener(self.report_name, callback)
+
+    def wait_for_released(self):
+        pms = Promise()
+        report.add_report_promise(self.report_name, pms)
+        pms.wait()
+
 
 btn_mid = Button('BTN_MID')
 btn_set = Button('BTN_SET')

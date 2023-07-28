@@ -12,3 +12,5 @@ while not comm_init():
 # 加载模型
 
 
+
+
