@@ -2,6 +2,7 @@ from typing import Set, Tuple
 from dataclasses import dataclass
 from typing import NamedTuple
 from .map_recogn import treasure_detect, get_treasure_pos
+import .camera
 
 @dataclass
 class Treasure_Map_Reco_Result:
@@ -26,11 +27,13 @@ class Treasure_Reco_Result(NamedTuple):
 
 
 
-def recognize_treasure_map(img) -> Treasure_Map_Reco_Result:
+def recognize_treasure_map(img=None) -> Treasure_Map_Reco_Result:
+    img = img if img else camera.get_camera_img()
     points = get_treasure_pos.get_pos(img)
     points = points if points else []
     points = [(i, 9-j) for i, j in points]
     return Treasure_Map_Reco_Result(set(points))
 
-def recognize_treasure(img) -> Treasure_Reco_Result:
+def recognize_treasure(img = None) -> Treasure_Reco_Result:
+    img = img if img else camera.get_camera_img()
     pass

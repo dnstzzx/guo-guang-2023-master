@@ -16,7 +16,7 @@ class Command:
         return s
     
 def gen_cmd_enter() -> Command:
-    return Command('ent', [])
+    return Command('go', ['400'])
     
 def gen_cmd_stop() -> Command:
     return Command('s', [])

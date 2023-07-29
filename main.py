@@ -2,10 +2,12 @@ from typing import List, Tuple
 import cv2
 from cv2 import namedWindow
 from gevent import config
-from comm import comm_init
+from comm import comm_init, comm_send_cmds_and_wait
+from command import gen_cmd_enter
 from config import configs
 from input import btn_mid, btn_set, btn_res
-import time
+import time, copy
+from map import Car_State, Direction, Path
 from path import path_to_commands
 from promise import Promise
 from vision import deep
@@ -20,7 +22,6 @@ def main():
     while not comm_init():
         print(f"串口{configs.serial_port}通信失败, 等待重试")
         time.sleep(2)
-
 
     # 启动相机
     while not camera_init():
@@ -83,25 +84,61 @@ def main():
             continue
 
         # 保存宝藏信息
-        treasure.treasures.clear()
+        treasure.treasures_dict.clear()
         for i, j in rec_result:
-            treasure.treasures[(i, j)] = treasure.Treasure(data.current_map.cell_of(i, j))
+            treasure.treasures_dict[(i, j)] = treasure.Treasure(data.current_map.cell_of(i, j))
         break
 
 
     # 计算初始路径
     print("正在计算初始路径")
     curr_state = data.entry_point
-    target = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
-    path = dijkstra.calc_path(curr_state, target)
     
-    cmds =  path_to_commands(path)
 
-    print(f"目标点: ({target.pos.x}, {target.pos.y})")
-    print("按下MID出发")
-    btn_mid.wait_for_released()
-    print("出发")
+    while True:
+        if curr_state == data.exit_point:
+            pass
+        
+        # 计算路径
+        target_t = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
+        target = treasure.get_best_reach_point(curr_state, target_t)
+        path = update_path(curr_state, target)
+        cmds = path_to_commands(path)
 
+        if curr_state == data.entry_point:
+            cmds = gen_cmd_enter() + cmds
+            print(f"目标点: ({target.pos.x}, {target.pos.y})")
+            print("按下MID出发")
+            btn_mid.wait_for_released()
+            print("出发")
+        
+        # 打印路径
+
+        # 执行命令
+        locked = comm_send_cmds_and_wait(cmds)
+        if locked :
+            print("已锁定, 从起点重新开始")
+            curr_state = data.entry_point
+            continue
+
+        # 到达点位, 开始识别
+        deep.recognize_treasure()
+
+
+    
+
+def update_path(current: Car_State, target: Car_State) -> Path:
+    m = data.current_map
+    origin_borders = copy.deepcopy(m.borders)
+    for (i, j), t in treasure.treasures_dict.items():
+        if t.is_hate:
+            for dir in Direction:
+                m.cell_of(i, j).set_border(dir, True)
+    p = dijkstra.calc_path(current, target)
+    m.borders = origin_borders
+    return p
+
+    
     
 
 

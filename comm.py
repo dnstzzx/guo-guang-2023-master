@@ -41,8 +41,6 @@ def comm_init() -> bool:
             return False
     except Exception:
         return False
-    
-    
     return True
 
 def comm_send_str(data: str) -> bool:
