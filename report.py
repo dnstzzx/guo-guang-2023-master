@@ -38,3 +38,5 @@ def on_report_recv(rpt: Report):
 
     for promise in promises:
         promise.set_done(rpt)
+
+    print(f"recved report {name}, args:{rpt.args}")

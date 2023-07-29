@@ -1,3 +1,4 @@
+from typing import Union
 import time
 from typing import List
 import serial
@@ -8,23 +9,32 @@ import report
 
 ser: serial.Serial
 
+def process_raw_rpt(l) -> Union[report.Report, None]:
+    if '<<<' in l and '>>>' in l:
+        try:
+            raw = l.split('<<<')[1].split('>>>')[0]
+        except Exception:
+            return None
+        segs = raw.split(':')
+        name = segs[0]
+        args = segs[1:] if len(segs) > 1 else []
+        rpt = report.Report(name, args)
+        report.on_report_recv(rpt)
+
 def comm_recv_task():
     while True:
         l = ser.readline()
-        if '<<<' in l and '>>>' in l:
-            try:
-                raw = l.split('<<<')[1].split('>>>')[0]
-            except Exception:
-                continue
-            segs = raw.split(':')
-            name = segs[0]
-            args = segs[1:] if len(segs) > 1 else []
-            rpt = report.Report(name, args)
-            report.on_report_recv(rpt)
-            
+        process_raw_rpt(l)
+
+def mock_input_task():
+    while True:
+        l = input()
+        process_raw_rpt(l)
 
 def comm_init() -> bool:
     global ser
+    if configs.mock_mode:
+        pass
     try:
         ser = serial.Serial(configs.serial_port, configs.serial_baund_rate)
         if not ser.is_open():
@@ -36,11 +46,13 @@ def comm_init() -> bool:
     return True
 
 def comm_send_str(data: str) -> bool:
-    if not ser.is_open():
-        print("串口发送失败: " + data)
-        return False
-    ser.write(data.encode())
-    ser.flush()
+    if not configs.mock_mode:
+        if not ser.is_open():
+            print("串口发送失败: " + data)
+            return False
+        ser.write(data.encode())
+        ser.flush()
+    print('sent command: ' + data)
 
 def comm_send_cmds(cmds: List[Command]):
     s = ''.join(str(cmds))

@@ -5,7 +5,6 @@ import dijkstra, dp
 
 from map import Cell
 
-
 class Treasure:
     pos: Cell
     known: bool
@@ -29,7 +28,16 @@ class Treasure:
         if self.mine and self.real:
             return True
         return False
-
+    
+    @property
+    def is_hate(self):
+        if not self.known:
+            return True
+        if self.mine and not self.real: # 我方伪宝藏
+            return True
+        if self.real and not self.mine: # 对方真宝藏
+            return True
+        return False
 
 treasures: Dict[Tuple[int], Treasure] = {}
 
@@ -52,4 +60,3 @@ def calc_path_to_treasure(current: Car_State, t: Treasure):
         if cost < lowest_cost:
             lowest_cost, shortest_path = cost, path
     return shortest_path
-    

@@ -1,6 +1,7 @@
 from typing import List, Tuple
 import cv2
 from cv2 import namedWindow
+from gevent import config
 from comm import comm_init
 from config import configs
 from input import btn_mid, btn_set, btn_res
@@ -16,10 +17,9 @@ from vision.camera import camera_init, get_camera_img
 
 def main():
     # 建立通信
-
-    # while not comm_init():
-    #     print(f"串口{configs.serial_port}通信失败, 等待重试")
-    #     time.sleep(2)
+    while not comm_init():
+        print(f"串口{configs.serial_port}通信失败, 等待重试")
+        time.sleep(2)
 
 
     # 启动相机
@@ -48,8 +48,6 @@ def main():
             img = get_camera_img()
             rst = deep.recognize_treasure_map(img)
             points = rst.points if rst.check()[0] else []
-            for x, y in points:
-                pass
             cv2.imshow('识图预览', img)
             cv2.waitKey(34)
 
