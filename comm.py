@@ -1,3 +1,4 @@
+import threading
 from typing import Union
 import time
 from typing import List
@@ -23,29 +24,32 @@ def process_raw_rpt(l) -> Union[report.Report, None]:
 
 def comm_recv_task():
     while True:
-        l = ser.readline()
+        l = ser.readline().decode()
         process_raw_rpt(l)
 
 def mock_input_task():
     while True:
         l = input()
-        process_raw_rpt(l)
+        process_raw_rpt(f"<<<{l.replace(' ', ':')}>>>")
 
 def comm_init() -> bool:
     global ser
+    threading.Thread(target=mock_input_task).start()
     if configs.mock_mode:
-        pass
+        return True
     try:
         ser = serial.Serial(configs.serial_port, configs.serial_baund_rate)
-        if not ser.is_open():
+        if not ser.is_open:
             return False
-    except Exception:
+    except Exception as ex:
+        print(ex)
         return False
+    threading.Thread(target=comm_recv_task).start()
     return True
 
 def comm_send_str(data: str) -> bool:
     if not configs.mock_mode:
-        if not ser.is_open():
+        if not ser.is_open:
             print("串口发送失败: " + data)
             return False
         ser.write(data.encode())
@@ -53,7 +57,7 @@ def comm_send_str(data: str) -> bool:
     print('sent command: ' + data)
 
 def comm_send_cmds(cmds: List[Command]):
-    s = ''.join(str(cmds))
+    s = ''.join([str(cmd) for cmd in cmds])
     comm_send_str(s)
 
 

@@ -1,7 +1,8 @@
-import dataclasses
 from typing import Dict, List, Tuple
 from map import Car_State, Path
 import dijkstra, dp
+from vision import deep
+from config import configs
 
 from map import Cell
 
@@ -18,6 +19,18 @@ class Treasure:
         self.mine = False
         self.real = False
         self.pushed = False
+
+    def update(self, recn_rst: deep.Treasure_Reco_Result):
+        self.known = True
+        if recn_rst.major_recognized:
+            self.mine = (recn_rst.majar_is_red == configs.we_are_red)
+            self.real = (recn_rst.minor_is_green == recn_rst.majar_is_red) if recn_rst.minor_recognized else True
+            if not self.twin.known:
+                self.twin.update(recn_rst)
+
+        else:
+            self.mine = False
+            self.real = False
 
     @property
     def is_interest(self):
@@ -44,6 +57,10 @@ class Treasure:
         pos = self.pos
         pts = [Car_State(pos.get_neighbor_to(dir), dir) for dir in pos.get_neighbor_directions()]
         return pts
+    
+    @property
+    def twin(self):
+        return treasures_dict[(self.pos.x, self.pos.y)]
 
 
 treasures_dict: Dict[Tuple[int], Treasure] = {}
@@ -51,8 +68,8 @@ treasures_dict: Dict[Tuple[int], Treasure] = {}
 
 def determine_treasure_order(current: Car_State, end: Car_State) -> List[Treasure]:
     interest_treasures = [t for t in treasures_dict.values() if t.is_interest]
-    state_to_treasure = {Car_State(it.pos, it.pos.get_neighbor_directions[0]): it for it in interest_treasures}
-    cost_dict = dijkstra.calc_cost_dict(state_to_treasure.keys())
+    state_to_treasure = {Car_State(it.pos, it.pos.get_neighbor_directions()[0]): it for it in interest_treasures}
+    cost_dict = dijkstra.calc_cost_dict(list(state_to_treasure.keys()) + [current, end])
     state_order = dp.calc_car_state_order(current, end, state_to_treasure.keys(), cost_dict)
     treasure_order = [state_to_treasure[s] for s in state_order]
     return treasure_order

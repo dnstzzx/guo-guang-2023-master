@@ -85,14 +85,14 @@ def path_to_commands(path: Path) -> List[Command]:
             using_scanner_dir = current.car_dir.opposite if using_back else current.car_dir
             turning_dir = using_scanner_dir.relative_get(next.move_dir)
             if turning_dir == Direction.L:
-                cmds.append(gen_cmd_turn_left(1))
+                cmds.append(gen_cmd_turn_left(1, using_back))
             elif turning_dir == Direction.R:
-                cmds.append(gen_cmd_turn_right(1))
+                cmds.append(gen_cmd_turn_right(1, using_back))
             elif turning_dir == Direction.B:
                 last_pos = current.states[-1].pos
                 has_left = last_pos.has_neighbor_to(using_scanner_dir.relative_apply(Direction.L))
                 #has_right = last_pos.has_neighbor_to(current.toward.relative_apply(Direction.L))
-                cmds.append(gen_cmd_turn_left(1 + int(has_left)))
+                cmds.append(gen_cmd_turn_left(1 + int(has_left), using_back))
 
         current = next
     

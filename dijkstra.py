@@ -71,11 +71,16 @@ def get_neighbors(state: Car_State) -> List[Tuple[Car_State, int]]:
         cost = 1
         res.append((new_state, cost))
     for neib_dir in pos.get_neighbor_directions():  # 转弯
-        if neib_dir == toward:
+        if neib_dir == toward or neib_dir == toward.opposite:
             continue
         new_state = Car_State(pos, neib_dir)
+        oppo_new_state = Car_State(pos, neib_dir.opposite)
         cost = 1
-        res.append((new_state, cost))
+        if new_state not in res:
+            res.append((new_state, cost))
+        if oppo_new_state not in res:
+            res.append((oppo_new_state, cost))
+        
     return res
 
 
