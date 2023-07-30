@@ -40,56 +40,49 @@ def main():
         rec_result: List[Tuple[int]] = []
 
         # 预览
-        # print("按下MID开始识别")
-        # pms = Promise()
-        # btn_mid.add_released_promise(pms)
-        # while not pms.is_done:
-        #     img = get_camera_img()
-        #     rst = deep.recognize_treasure_map(img)
-        #     points = rst.points if rst.check()[0] else []
-        #     cv2.imshow('识图预览', img)
-        #     cv2.waitKey(34)
+        print("按下MID开始识别")
+        pms = Promise()
+        btn_mid.add_released_promise(pms)
+        while not pms.is_done:
+            img = get_camera_img()
+            rst = deep.recognize_treasure_map(img)
+            points = rst.points if rst.check()[0] else []
+            cv2.imshow('识图预览', img)
+            cv2.waitKey(34)
 
-        # # 尝试识图
-        # for _ in range(5):
-        #     img = get_camera_img()
-        #     try:
-        #         rst = deep.recognize_treasure_map(img)
-        #         print(f'识别结果: {rst.points}')
-        #     except Exception:
-        #         continue
-        #     succ, msg = rst.check()
-        #     if not succ:
-        #         print('识别结果错误: ' + msg)
-        #         continue
-        #     rec_result = rst.points
-        #     break
+        # 尝试识图
+        for _ in range(5):
+            img = get_camera_img()
+            try:
+                rst = deep.recognize_treasure_map(img)
+                print(f'识别结果: {rst.points}')
+            except Exception:
+                continue
+            succ, msg = rst.check()
+            if not succ:
+                print('识别结果错误: ' + msg)
+                continue
+            rec_result = rst.points
+            break
 
-        # if len(rec_result) == 0:
-        #     print("按下RES重新开始")
-        #     btn_res.wait_for_released()
-        #     continue
+        if len(rec_result) == 0:
+            print("按下RES重新开始")
+            btn_res.wait_for_released()
+            continue
 
-        # # 确认结果
-        # print("识别结果为: " + str(rec_result))
-        # print("按下SET确认结果, 按下RESET重新识图")
-        # p_set = Promise()
-        # p_res = Promise()
-        # btn_set.add_released_promise(p_set)
-        # btn_res.add_released_promise(p_res)
-        # while (not p_set.is_done) and (not p_res.is_done):
-        #     time.sleep(0.01)
+        # 确认结果
+        print("识别结果为: " + str(rec_result))
+        print("按下SET确认结果, 按下RESET重新识图")
+        p_set = Promise()
+        p_res = Promise()
+        btn_set.add_released_promise(p_set)
+        btn_res.add_released_promise(p_res)
+        while (not p_set.is_done) and (not p_res.is_done):
+            time.sleep(0.01)
         
-        # if p_res.is_done:
-        #     print("识图结果已重置")
-        #     continue
-
-        
-        # DEBUG
-
-        rec_result = {(8, 4), (7, 7), (4, 3), (1, 5), (8, 1), (1, 8), (5, 6), (2, 2)}
-
-        # END DEBUG
+        if p_res.is_done:
+            print("识图结果已重置")
+            continue
 
         # 保存宝藏信息
         treasure.treasures_dict.clear()
@@ -111,7 +104,11 @@ def main():
             break
         
         # 计算路径
-        target_t = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
+        try:
+            target_t = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
+        except Exception as ex:
+            print(ex)
+            target_t = data.exit_point
         target_state = treasure.get_best_reach_point(curr_state, target_t)
         print(f"目标点: ({target_state.pos.x}, {target_state.pos.y}), 方向{target_state.toward}")
             
