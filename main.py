@@ -27,73 +27,69 @@ def main():
         btn_mid.wait_for_released()
 
     # 初始化模型
-    # print("正在预热模型")
-    # try:
-    #     img = cv2.imread('vision/sample.jpg')
-    #     deep.recognize_treasure_map(img)
-    # except Exception as ex:
-    #     print(ex)
+    print("正在预热模型")
+    try:
+        img = cv2.imread('vision/sample.jpg')
+        deep.recognize_treasure_map(img)
+    except Exception as ex:
+        print(ex)
 
     # 识图
-    # cv2.namedWindow('识图预览')
-    # while True:
-    #     rec_result: List[Tuple[int]] = []
+    cv2.namedWindow('识图预览')
+    while True:
+        rec_result: List[Tuple[int]] = []
 
-    #     # 预览
-    #     print("按下MID开始识别")
-    #     pms = Promise()
-    #     btn_mid.add_released_promise(pms)
-    #     while not pms.is_done:
-    #         img = get_camera_img()
-    #         rst = deep.recognize_treasure_map(img)
-    #         points = rst.points if rst.check()[0] else []
-    #         cv2.imshow('识图预览', img)
-    #         cv2.waitKey(34)
+        # 预览
+        print("按下MID开始识别")
+        pms = Promise()
+        btn_mid.add_released_promise(pms)
+        while not pms.is_done:
+            img = get_camera_img()
+            rst = deep.recognize_treasure_map(img)
+            points = rst.points if rst.check()[0] else []
+            cv2.imshow('识图预览', img)
+            cv2.waitKey(34)
 
-    #     # 尝试识图
-    #     for _ in range(5):
-    #         img = get_camera_img()
-    #         try:
-    #             rst = deep.recognize_treasure_map(img)
-    #             print(f'识别结果: {rst.points}')
-    #         except Exception:
-    #             continue
-    #         succ, msg = rst.check()
-    #         if not succ:
-    #             print('识别结果错误: ' + msg)
-    #             continue
-    #         rec_result = rst.points
-    #         break
+        # 尝试识图
+        for _ in range(5):
+            img = get_camera_img()
+            try:
+                rst = deep.recognize_treasure_map(img)
+                print(f'识别结果: {rst.points}')
+            except Exception:
+                continue
+            succ, msg = rst.check()
+            if not succ:
+                print('识别结果错误: ' + msg)
+                continue
+            rec_result = rst.points
+            break
 
-    #     if len(rec_result) == 0:
-    #         print("按下RES重新开始")
-    #         btn_res.wait_for_released()
-    #         continue
+        if len(rec_result) == 0:
+            print("按下RES重新开始")
+            btn_res.wait_for_released()
+            continue
 
-    #     # 确认结果
-    #     print("识别结果为: " + str(rec_result))
-    #     print("按下SET确认结果, 按下RESET重新识图")
-    #     p_set = Promise()
-    #     p_res = Promise()
-    #     btn_set.add_released_promise(p_set)
-    #     btn_res.add_released_promise(p_res)
-    #     while (not p_set.is_done) and (not p_res.is_done):
-    #         time.sleep(0.01)
+        # 确认结果
+        print("识别结果为: " + str(rec_result))
+        print("按下SET确认结果, 按下RESET重新识图")
+        p_set = Promise()
+        p_res = Promise()
+        btn_set.add_released_promise(p_set)
+        btn_res.add_released_promise(p_res)
+        while (not p_set.is_done) and (not p_res.is_done):
+            time.sleep(0.01)
         
-    #     if p_res.is_done:
-    #         print("识图结果已重置")
-    #         continue
+        if p_res.is_done:
+            print("识图结果已重置")
+            continue
 
-    #     # 保存宝藏信息
-    #     treasure.treasures_dict.clear()
-    #     for i, j in rec_result:
-    #         treasure.treasures_dict[(i, j)] = treasure.Treasure(data.current_map.cell_of(i, j))
-    #     break
+        # 保存宝藏信息
+        treasure.treasures_dict.clear()
+        for i, j in rec_result:
+            treasure.treasures_dict[(i, j)] = treasure.Treasure(data.current_map.cell_of(i, j))
+        break
     
-    rec_result =  {(8, 4), (7, 7), (1, 5), (4, 3), (8, 1), (1, 8), (5, 6), (2, 2)}
-    for i, j in rec_result:
-        treasure.treasures_dict[(i, j)] = treasure.Treasure(data.current_map.cell_of(i, j))
-
 
     # 计算初始路径
     print("正在计算初始路径")
@@ -102,7 +98,10 @@ def main():
 
     while True:
         if curr_state == data.exit_point:
-            pass
+            cmds = [gen_cmd_enter()]
+            comm_send_cmds_and_wait(cmds)
+            print("完成")
+            break
         
         # 计算路径
         target_t = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
@@ -155,8 +154,8 @@ def update_path(current: Car_State, target: Car_State) -> Path:
     m = data.current_map
     origin_borders = copy.deepcopy(m.borders)
     for (i, j), t in treasure.treasures_dict.items():
-        if t.pos == target.pos.get_neighbor_to(target.toward.opposite):
-            continue
+        # if t.pos == target.pos.get_neighbor_to(target.toward.opposite):
+        #     continue
         if t.is_hate:
             for dir in Direction:
                 m.cell_of(i, j).set_border(dir, True)
