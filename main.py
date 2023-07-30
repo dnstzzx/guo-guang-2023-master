@@ -151,7 +151,7 @@ def main():
         cmds = path_to_commands(path) + [gen_cmd_enter()]
 
         if curr_state == data.entry_point:
-            cmds = [gen_cmd_enter()] + cmds
+            cmds = cmds + [gen_cmd_enter()] 
             print("按下MID出发")
             btn_mid.wait_for_released()
             print("出发")
