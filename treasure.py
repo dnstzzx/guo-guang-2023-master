@@ -26,7 +26,8 @@ class Treasure:
             self.mine = (recn_rst.majar_is_red == configs.we_are_red)
             self.real = (recn_rst.minor_is_green == recn_rst.majar_is_red) if recn_rst.minor_recognized else True
             if not self.twin.known:
-                self.twin.update(recn_rst)
+                twin_rst = deep.Treasure_Reco_Result(True, recn_rst.major_recognized, not recn_rst.majar_is_red, not recn_rst.minor_is_green)
+                self.twin.update(twin_rst)
 
         else:
             self.mine = False
