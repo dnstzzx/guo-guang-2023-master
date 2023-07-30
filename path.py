@@ -83,9 +83,10 @@ def path_to_commands(path: Path) -> List[Command]:
         # 生成衔接转弯
         if current.car_dir != next.car_dir:
             # using_back = next.is_backward
+            car_turn = current.car_dir.relative_get(next.car_dir)
             using_back = not current.states[-1].pos.has_neighbor_to(next.car_dir)
             using_scanner_dir = current.car_dir.opposite if using_back else current.car_dir
-            turning_dir = using_scanner_dir.relative_get(next.car_dir)
+            turning_dir = current.car_dir.relative_get(next.car_dir)
             if turning_dir == Direction.L:
                 cmds.append(gen_cmd_turn_left(1, using_back))
             elif turning_dir == Direction.R:
