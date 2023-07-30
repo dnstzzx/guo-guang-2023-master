@@ -11,7 +11,7 @@ from promise import Promise
 from vision import deep
 import treasure
 import data
-import dijkstra
+import dijkstra, treasure
 
 from vision.camera import camera_init, get_camera_img
 
@@ -95,20 +95,11 @@ def main():
     print("正在计算初始路径")
     curr_state = data.entry_point
     
-
-    while True:
-        if curr_state == data.exit_point:
-            cmds = [gen_cmd_enter()]
-            comm_send_cmds_and_wait(cmds)
-            print("完成")
-            break
+    # 寻宝
+    while len(treasure.get_interest_treasures()) > 0:
         
         # 计算路径
-        try:
-            target_t = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
-        except Exception as ex:
-            print(ex)
-            target_t = data.exit_point
+        target_t = treasure.determine_treasure_order(curr_state, data.exit_point)[0]
         target_state = treasure.get_best_reach_point(curr_state, target_t)
         print(f"目标点: ({target_state.pos.x}, {target_state.pos.y}), 方向{target_state.toward}")
             
@@ -124,8 +115,8 @@ def main():
         # 打印路径
 
         # 执行命令
-        locked = comm_send_cmds_and_wait(cmds)
-        if not locked :
+        succeess = comm_send_cmds_and_wait(cmds)
+        if not succeess :
             print("已锁定, 从起点重新开始")
             curr_state = data.entry_point
             continue
@@ -143,8 +134,8 @@ def main():
             path = dijkstra.calc_path(curr_state, target_state)
             cmds = path_to_commands(path)
             # 执行命令
-            locked = comm_send_cmds_and_wait(cmds)
-            if not locked :
+            succeess = comm_send_cmds_and_wait(cmds)
+            if not succeess :
                 print("已锁定, 从起点重新开始")
                 curr_state = data.entry_point
                 continue
@@ -152,6 +143,27 @@ def main():
             target_t.pushed = True
         else :
             print("不推")
+
+    # 离开地图
+    while curr_state != data.exit_point:
+        path = update_path(curr_state, data.exit_point)
+        print("前往出口")
+        cmds = path_to_commands(path) + [gen_cmd_enter()]
+
+        if curr_state == data.entry_point:
+            cmds = [gen_cmd_enter()] + cmds
+            print("按下MID出发")
+            btn_mid.wait_for_released()
+            print("出发")
+
+        succeess = comm_send_cmds_and_wait(cmds)
+        if not succeess :
+            print("已锁定, 从起点重新开始")
+            curr_state = data.entry_point
+            continue
+        curr_state = target_state
+        print("完成")
+        break
 
 
 # 计算绕开扣分宝藏的路径

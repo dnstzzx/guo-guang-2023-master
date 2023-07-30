@@ -66,9 +66,11 @@ class Treasure:
 
 treasures_dict: Dict[Tuple[int], Treasure] = {}
 
+def get_interest_treasures():
+    return [t for t in treasures_dict.values() if t.is_interest]
 
 def determine_treasure_order(current: Car_State, end: Car_State) -> List[Treasure]:
-    interest_treasures = [t for t in treasures_dict.values() if t.is_interest]
+    interest_treasures = get_interest_treasures()
     state_to_treasure = {Car_State(it.pos, it.pos.get_neighbor_directions()[0]): it for it in interest_treasures}
     cost_dict = dijkstra.calc_cost_dict(list(state_to_treasure.keys()) + [current, end])
     state_order = dp.calc_car_state_order(current, end, state_to_treasure.keys(), cost_dict)
