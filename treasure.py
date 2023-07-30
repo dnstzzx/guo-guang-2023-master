@@ -61,7 +61,7 @@ class Treasure:
     
     @property
     def twin(self):
-        return treasures_dict[(self.pos.x, self.pos.y)]
+        return treasures_dict[(9 - self.pos.x, 9 - self.pos.y)]
 
 
 treasures_dict: Dict[Tuple[int], Treasure] = {}
